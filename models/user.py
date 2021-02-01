@@ -21,6 +21,14 @@ class UserModel(db.Model):
 
     #--------------------------------------
 
+    def json(self):
+        return {
+            'id': self.id,
+            'username': self.username
+        }
+
+    #------------------------------------------------------
+
     # Поиск пользователя по имени
     @classmethod
     def find_by_username(cls, username):
@@ -41,3 +49,8 @@ class UserModel(db.Model):
     def save_to_db(self):
         db.session.add(self) #просим SQLA добавить юзера в БД
         db.session.commit()  #сохраняем изменения в БД
+
+    #Удаление юзера из БД
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()

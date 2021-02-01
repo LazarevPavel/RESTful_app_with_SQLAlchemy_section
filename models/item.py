@@ -3,7 +3,7 @@ from db import db
 
 #Класс-модель айтема
 class ItemModel(db.Model):
-    #Таблица БД, ассоциируемая с этим классов объектов
+    #Таблица БД, ассоциируемая с этим классом объектов
     __tablename__ = 'items'
 
     # Указываем, какие столбцы есть в данной ассоциируемой таблице
@@ -26,7 +26,11 @@ class ItemModel(db.Model):
 
     #Функция возврата айтема в JSON-формате
     def json(self):
-        return {'name': self.name , 'price': self.price}
+        return {'id': self.id,
+                'name': self.name ,
+                'price': self.price,
+                'store_id': self.store_id
+               }
 
 
     # Метод поиска айтема по имени
@@ -34,6 +38,12 @@ class ItemModel(db.Model):
     def find_by_name(cls, name):
         #Вернём результат запроса, построенного "строителем запросов" (.query). filter_by - запрос отбора по параметру
         return cls.query.filter_by(name = name).first()  # SELECT * FROM items WHERE name=name LIMIT 1
+
+
+    # Метод поиска всех айтемов в базе
+    @classmethod
+    def find_all(cls):
+        return cls.query.all()
 
 
     # Метод вставки айтема в таблицу БД (работает как insert и как update)

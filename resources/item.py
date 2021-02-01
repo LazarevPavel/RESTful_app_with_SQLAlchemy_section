@@ -1,6 +1,6 @@
 #ИМПОРТЫ
 from flask_restful import Resource, reqparse
-from flask_jwt import jwt_required
+from flask_jwt_extended import jwt_required, fresh_jwt_required, jwt_optional, get_jwt_claims, get_jwt_identity
 from models.item import ItemModel
 
 
@@ -12,7 +12,7 @@ class Item(Resource):
     parser.add_argument('store_id', type=int, required=True, help='Every item needs a store id')  # добавляем указание, какой аргумент парсить из запроса
 
     #Метод получения айтема по имени
-    @jwt_required()     #проверка на авторизованность
+    @jwt_required     #проверка на авторизованность
     def get(self, name):
         item = ItemModel.find_by_name(name) #Ищем в базе файл по имени
 
@@ -24,7 +24,7 @@ class Item(Resource):
 
 
     #Метод создания нового айтема
-    @jwt_required()
+    @fresh_jwt_required
     def post(self, name):
         #Пробегаемся по списку айтемов, и если айтем с таким именем уже существует
         if ItemModel.find_by_name(name):
@@ -45,8 +45,13 @@ class Item(Resource):
 
 
     #Удаление айтема из списка
-    @jwt_required()
+    @jwt_required
     def delete(self, name):
+        claims = get_jwt_claims()  #берём данные из токена
+
+        if not claims['is_admin']:  #если запрос пришёл от НЕ юзера-админа
+            return {'message': 'Admin privilege required.'}, 401  #выдаём ошибку
+
         item = ItemModel.find_by_name(name)
         if item:
             item.delete_from_db()
@@ -55,7 +60,7 @@ class Item(Resource):
 
 
     #Добавление или обновление айтема
-    @jwt_required()
+    @jwt_required
     def put(self, name):
         data = Item.parser.parse_args()      #Парсим запрос и забираем оттуда данные
 
@@ -74,8 +79,17 @@ class Item(Resource):
 #Класс списка айтемов, наследованный от класса Ресурс
 class ItemList(Resource):
     #Получить список всех айтемов
-    @jwt_required()     #Проверка на авторизованность
+    @jwt_optional  #декоратор опционального возврата на запрос identity. То есть JWTManager сможет вернуть None, если юзер на авторизован
     def get(self):
-        #Берём из базы полный список айтемов и сразу заполняем ими список, который сразу вставляем в словарь
-        return {'items': [item.json() for item in ItemModel.query.all()]}, 200  #и возвращаем словарь
+        #Даёт ID юзера (но в силу jwt_optional может дать и None - это значит, что юзер не залогинился)
+        user_id = get_jwt_identity()
+        items = [item.json() for item in ItemModel.find_all()]  #выгружаем полный набор айтемов
+
+        if user_id:  #если юзер был авторизован
+            return {'items': items}, 200   #возвращаем полный набор всех характеристик айтемов
+
+        #Иначе выгружаем только названия айтемов
+        return {'items': [item['name'] for item in items],
+                'message': 'More data available if you log in.'
+               }, 200
 #---------------------------------------------------

@@ -1,6 +1,6 @@
 #ИМПОРТЫ
 from flask_restful import Resource, reqparse
-from flask_jwt import jwt_required
+from flask_jwt_extended import jwt_required
 from models.store import StoreModel
 
 #-------------------------------------------------
@@ -9,7 +9,7 @@ from models.store import StoreModel
 class Store(Resource):
 
     #Получить магазин по имени
-    @jwt_required()
+    @jwt_required
     def get(self, name):
         store = StoreModel.find_by_name(name) #ищем магазин
         if store:
@@ -18,7 +18,7 @@ class Store(Resource):
 
 
     #Добавить новый магазин или обновить старый
-    @jwt_required()
+    @jwt_required
     def post(self, name):
         #Если такой магазин уже существует
         if StoreModel.find_by_name(name):
@@ -35,7 +35,7 @@ class Store(Resource):
 
 
     #Удалить магазин по имени
-    @jwt_required()
+    @jwt_required
     def delete(self, name):
         store = StoreModel.find_by_name(name) #ищем магазин по имени
         if store:
@@ -49,9 +49,9 @@ class Store(Resource):
 class StoreList(Resource):
 
     #Получить список магазинов
-    @jwt_required()
+    @jwt_required
     def get(self):
-        return {'stores': [store.json() for store in StoreModel.query.all()]}
+        return {'stores': [store.json() for store in StoreModel.find_all()]}
 
 #------------------------------------------------------
 

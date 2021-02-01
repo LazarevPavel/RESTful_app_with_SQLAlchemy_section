@@ -22,7 +22,10 @@ class StoreModel(db.Model):
 
     #Функция возврата магазина в JSON-формате
     def json(self):
-        return {'name': self.name, 'items': [item.json() for item in self.items.all()]}
+        return {'id': self.id,
+                'name': self.name,
+                'items': [item.json() for item in self.items.all()]
+               }
 
 
     # Метод поиска магазина по имени
@@ -30,6 +33,12 @@ class StoreModel(db.Model):
     def find_by_name(cls, name):
         #Вернём результат запроса, построенного "строителем запросов" (.query). filter_by - запрос отбора по параметру
         return cls.query.filter_by(name = name).first()  # SELECT * FROM stores WHERE name=name LIMIT 1
+
+
+    #Метод поиска всех магазинов в базе
+    @classmethod
+    def find_all(cls):
+        cls.query.all()
 
 
     # Метод вставки магазина в таблицу БД (работает как insert и как update)
